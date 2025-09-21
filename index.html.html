@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AB RI – ClimateWeek NYC 2025 (Shareable Agenda)</title>
+<style>
+  :root {
+    --bg: #0b0c10;
+    --card: #111218;
+    --muted: #aeb4c0;
+    --text: #e6ebf2;
+    --accent: #5cc8ff;
+    --pill: #1b1f2a;
+  }
+  html, body { background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  .subtitle { color: var(--muted); margin-bottom: 20px; }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .search, .select, .btn { background: var(--card); border-radius: 12px; padding: 10px 12px; border: 1px solid #2a2f3a; color: var(--text); }
+  .btn { cursor: pointer; }
+  .chip { background: var(--pill); border: 1px solid #2a2f3a; padding: 6px 10px; border-radius: 999px; display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
+  .chip button { background: transparent; border: none; color: var(--muted); cursor: pointer; }
+  .day { margin-bottom: 20px; }
+  .day h2 { font-size: 18px; color: var(--accent); margin: 16px 0 8px; }
+  .event { background: var(--card); border-radius: 16px; border: 1px solid #252a35; padding: 14px; display: grid; grid-template-columns: 120px 1fr 220px; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .time { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .summary { font-weight: 600; }
+  .loc { color: var(--muted); font-size: 12px; }
+  .attendees { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 800px) { .event { grid-template-columns: 1fr; } .attendees { justify-content: flex-start; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>AB RI – ClimateWeek NYC 2025</h1>
+  <div class="subtitle">Filter the Outlook-style agenda by attendee, keyword, or day.</div>
+  <div class="controls">
+    <div class="row">
+      <input id="search" class="search" type="search" placeholder="Search by title or location…" />
+      <select id="attendee" class="select"><option value="">Filter by attendee…</option></select>
+      <select id="day" class="select"><option value="">All days</option></select>
+      <button id="export" class="btn">Export filtered to CSV</button>
+      <button id="clear" class="btn">Clear filters</button>
+    </div>
+    <div id="chips" class="row"></div>
+  </div>
+  <div id="agenda"></div>
+</div>
+<script>
+const rawEvents = [{"start": "2025-09-22T08:45:00", "end": "2025-09-22T10:30:00", "summary": "Ceres: Bringing Together Private Sector Action and Public Policy to End Deforestation", "location": "Norges Bank Investment Management (NBIM) Office, 505 Fifth Ave, New York, NY 10017", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "8:45 AM", "end_time": "10:30 AM"}, {"start": "2025-09-22T10:00:00", "end": "2025-09-22T11:30:00", "summary": "Columbia Engineering (in-person): Navigating Climate Challenges: Resilience through Insurance, Markets and Public Policy", "location": "Columbia Engineering (in-person)", "description": "AB Representation: Insurance Team", "attendees": ["Insurance Team"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "10:00 AM", "end_time": "11:30 AM"}, {"start": "2025-09-22T12:00:00", "end": "2025-09-22T13:30:00", "summary": "EDF Methane Roundtable Event", "location": "Savoy Club, 767 Fifth Avenue, New York, NY 10153, Floor 2", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "12:00 PM", "end_time": "1:30 PM"}, {"start": "2025-09-22T13:00:00", "end": "2025-09-22T14:00:00", "summary": "Tradeverifyd: Advancing Global Supply Chain Traceability Through Open-Source Innovation", "location": "Manhattan, NYC (register for details)", "description": "AB Representation: Cole Moore", "attendees": ["Cole Moore"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "1:00 PM", "end_time": "2:00 PM"}, {"start": "2025-09-22T13:00:00", "end": "2025-09-22T18:00:00", "summary": "BloombergNEF: A Big, Beautiful Future? What Comes Next for the US Energy Transition", "location": "120 Park Avenue, New York, NY", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "1:00 PM", "end_time": "6:00 PM"}, {"start": "2025-09-22T14:00:00", "end": "2025-09-22T19:00:00", "summary": "S&P Global Sustainable1 Investor Client Council (ICC)", "location": "55 Water Street, New York, NY", "description": "AB Representation: Erin Bigley", "attendees": ["Erin Bigley"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "2:00 PM", "end_time": "7:00 PM"}, {"start": "2025-09-22T14:30:00", "end": "2025-09-22T15:30:00", "summary": "JPMorgan: Jonathan Pershing, COP30 North American Envoy", "location": "JPM 383 Madison Ave", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "2:30 PM", "end_time": "3:30 PM"}, {"start": "2025-09-22T15:00:00", "end": "2025-09-22T18:00:00", "summary": "Columbia Climate School: Investment and Careers in Climate", "location": "Pillsbury Winthrop Shaw Pittman, 31 West 52nd Street, 29th Floor, New York, NY 10019", "description": "AB Representation: TBD / Open", "attendees": [], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "3:00 PM", "end_time": "6:00 PM"}, {"start": "2025-09-22T15:30:00", "end": "2025-09-22T17:30:00", "summary": "Columbia Engineering (in-person): Data and Partnerships for Global Clean Air and Climate", "location": "Columbia Engineering", "description": "AB Representation: John Huang", "attendees": ["John Huang"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "3:30 PM", "end_time": "5:30 PM"}, {"start": "2025-09-22T15:30:00", "end": "2025-09-22T16:30:00", "summary": "Microsoft: AI in Action — Innovations for Supply Chain Sustainability (Climate Group Event)", "location": "New York, NY", "description": "AB Representation: Kelvin Paez", "attendees": ["Kelvin Paez"], "date_key": "2025-09-22", "date_label": "Monday, Sep 22", "start_time": "3:30 PM", "end_time": "4:30 PM"}, {"start": "2025-09-23T08:30:00", "end": "2025-09-23T15:30:00", "summary": "PRI at New York Climate Week", "location": "Nuveen (TIAA), Pritchett Conference Room, 5th Floor, 730 3rd Avenue, New York, NY 10017", "description": "AB Representation: Alex Mitchell", "attendees": ["Alex Mitchell"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "8:30 AM", "end_time": "3:30 PM"}, {"start": "2025-09-23T10:00:00", "end": "2025-09-23T19:00:00", "summary": "Sustainable Investment Forum North America", "location": "London Stock Exchange Group Offices, New York, NY", "description": "AB Representation: Erin Bigley (afternoon), Rachel Hughes (10am–1pm)", "attendees": ["Erin Bigley", "Rachel Hughes"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "10:00 AM", "end_time": "7:00 PM"}, {"start": "2025-09-23T11:00:00", "end": "2025-09-23T13:30:00", "summary": "Environmental Defense Fund: Meeting the Moment — Shaping the Sustainable Finance and Climate Agenda 2025–2035", "location": "Convene, 530 Fifth Avenue, New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "11:00 AM", "end_time": "1:30 PM"}, {"start": "2025-09-23T13:00:00", "end": "2025-09-23T18:00:00", "summary": "ICE Climate & Capital Conference & Sustainable Bonds Roundtable @ the NYSE", "location": "11 Wall Street, New York, NY (NYSE)", "description": "AB Representation: Kelvin Paez", "attendees": ["Kelvin Paez"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "1:00 PM", "end_time": "6:00 PM"}, {"start": "2025-09-23T14:00:00", "end": "2025-09-23T17:00:00", "summary": "Citi Conversations — Seismic Shifts: Ensuring Strategic Growth, Security and Long-Term Resiliency", "location": "388 Greenwich St, New York, NY", "description": "AB Representation: Patrick O’Connell, Rachel Hughes", "attendees": ["Patrick O’Connell", "Rachel Hughes"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "2:00 PM", "end_time": "5:00 PM"}, {"start": "2025-09-23T14:00:00", "end": "2025-09-23T17:00:00", "summary": "Rystad Energy: Clean Energy Forum", "location": "The Yale Club, New York, NY", "description": "AB Representation: TBD / Open", "attendees": [], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "2:00 PM", "end_time": "5:00 PM"}, {"start": "2025-09-23T16:00:00", "end": "2025-09-23T18:30:00", "summary": "Morningstar Sustainalytics: From Vineyards to Portfolios — Navigating a Changing Climate (Sip, Connect & Learn)", "location": "Community Wine & Spirits, 140 10th Ave, New York, NY", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-23", "date_label": "Tuesday, Sep 23", "start_time": "4:00 PM", "end_time": "6:30 PM"}, {"start": "2025-09-24T07:45:00", "end": "2025-09-24T10:45:00", "summary": "Bank of America: Trends in Development Finance — Next Generation of Debt for Development and Beyond", "location": "Bank of America (NYC)", "description": "AB Representation: Kelvin Paez", "attendees": ["Kelvin Paez"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "7:45 AM", "end_time": "10:45 AM"}, {"start": "2025-09-24T08:30:00", "end": "2025-09-24T10:00:00", "summary": "Bloomberg: Investing in Transition — Government & Municipal Bonds", "location": "731 Lexington Ave, New York, NY", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "8:30 AM", "end_time": "10:00 AM"}, {"start": "2025-09-24T08:30:00", "end": "2025-09-24T19:00:00", "summary": "Columbia Engineering: Electrochemical Energy Fall 2025 Symposium", "location": "Columbia Engineering (in-person)", "description": "AB Representation: Open", "attendees": [], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "8:30 AM", "end_time": "7:00 PM"}, {"start": "2025-09-24T09:00:00", "end": "2025-09-24T10:30:00", "summary": "EDF: From Data to Action — Driving Impact with Transparency & Partnerships", "location": "Convene, 530 Fifth Ave, New York, NY", "description": "AB Representation: Open", "attendees": [], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "9:00 AM", "end_time": "10:30 AM"}, {"start": "2025-09-24T09:00:00", "end": "2025-09-24T17:00:00", "summary": "Columbia University: 2025 SIRI Blended Finance Conference", "location": "Columbia University, New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "9:00 AM", "end_time": "5:00 PM"}, {"start": "2025-09-24T09:30:00", "end": "2025-09-24T17:30:00", "summary": "Ceres Sessions at The Nest Climate Campus", "location": "Javits Center, 445 11th Ave, New York, NY", "description": "AB Representation: Kelvin Paez, Alex Mitchell", "attendees": ["Kelvin Paez", "Alex Mitchell"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "9:30 AM", "end_time": "5:30 PM"}, {"start": "2025-09-24T11:00:00", "end": "2025-09-24T12:30:00", "summary": "Columbia University: CGEP & CGT — AI for the Energy Transition", "location": "Columbia University, New York, NY", "description": "AB Representation: Robertas Stancikas", "attendees": ["Robertas Stancikas"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "11:00 AM", "end_time": "12:30 PM"}, {"start": "2025-09-24T17:30:00", "end": "2025-09-24T19:00:00", "summary": "Ceres Partners Reception 2025 (Invite only)", "location": "New York, NY", "description": "AB Representation: Alex Mitchell", "attendees": ["Alex Mitchell"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "5:30 PM", "end_time": "7:00 PM"}, {"start": "2025-09-24T17:30:00", "end": "2025-09-24T20:00:00", "summary": "Columbia University: The Future of US and Global Energy Policy", "location": "Penn Club of New York, 30 W 44th St, New York, NY 10036", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-24", "date_label": "Wednesday, Sep 24", "start_time": "5:30 PM", "end_time": "8:00 PM"}, {"start": "2025-09-25T07:00:00", "end": "2025-09-25T12:00:00", "summary": "Clarity AI: Reclaiming Climate Investing — A Fact-Based Approach Powered by AI", "location": "New York, NY", "description": "AB Representation: Sara Rosner (panelist)", "attendees": ["Sara Rosner"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "7:00 AM", "end_time": "12:00 PM"}, {"start": "2025-09-25T07:30:00", "end": "2025-09-25T17:00:00", "summary": "Goldman Sachs Global Sustainability Forum — 2025", "location": "New York, NY", "description": "AB Representation: Rachel Hughes", "attendees": ["Rachel Hughes"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "7:30 AM", "end_time": "5:00 PM"}, {"start": "2025-09-25T08:00:00", "end": "2025-09-25T11:00:00", "summary": "Apex: Driving Value Creation Through Climate Data — Breakfast Panel", "location": "Cornell Club, 6 East 44th St, New York, NY", "description": "AB Representation: John Huang", "attendees": ["John Huang"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "8:00 AM", "end_time": "11:00 AM"}, {"start": "2025-09-25T08:00:00", "end": "2025-09-25T09:00:00", "summary": "Jefferies — NYC Climate Week Debrief (invite only)", "location": "Midtown Manhattan", "description": "AB Representation: Cole Moore (waitlisted)", "attendees": ["Cole Moore"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "8:00 AM", "end_time": "9:00 AM"}, {"start": "2025-09-25T08:00:00", "end": "2025-09-25T16:00:00", "summary": "MSCI Americas Summit — Navigating Innovation and Resilience", "location": "320 Park Avenue, New York, NY 10022", "description": "AB Representation: Cole Moore (waitlisted)", "attendees": ["Cole Moore"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "8:00 AM", "end_time": "4:00 PM"}, {"start": "2025-09-25T08:00:00", "end": "2025-09-25T19:30:00", "summary": "Columbia Engineering (Hybrid): Rethinking Water 2025", "location": "Hybrid (Columbia Engineering)", "description": "AB Representation: Cole Moore", "attendees": ["Cole Moore"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "8:00 AM", "end_time": "7:30 PM"}, {"start": "2025-09-25T08:30:00", "end": "2025-09-25T19:00:00", "summary": "RBC: Global Adaptation and Resilience Investment Working Group — Resilience Finance Day", "location": "New York, NY", "description": "AB Representation: Sara Rosner", "attendees": ["Sara Rosner"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "8:30 AM", "end_time": "7:00 PM"}, {"start": "2025-09-25T09:30:00", "end": "2025-09-25T12:00:00", "summary": "WEF–CGEP Workshop: Public Policy Playbook for De-risking Mining Investments", "location": "New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "9:30 AM", "end_time": "12:00 PM"}, {"start": "2025-09-25T11:00:00", "end": "2025-09-25T14:00:00", "summary": "Columbia University: GenAI for Climate Science", "location": "Columbia Engineering Innovation Hub, 2276 12th Avenue, New York, NY", "description": "AB Representation: Rachel Hughes & TBD", "attendees": ["Rachel Hughes"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "11:00 AM", "end_time": "2:00 PM"}, {"start": "2025-09-25T12:00:00", "end": "2025-09-25T13:00:00", "summary": "AB Private Client: Natural Hazard Lunch", "location": "New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "12:00 PM", "end_time": "1:00 PM"}, {"start": "2025-09-25T16:00:00", "end": "2025-09-25T17:15:00", "summary": "Columbia University: Frontier Issues in AI and Climate Change — Seizing the Opportunity, Meeting the Challenge", "location": "Tap Room, Yale Club, 50 Vanderbilt Ave, New York, NY 10017", "description": "AB Representation: Cole Moore", "attendees": ["Cole Moore"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "4:00 PM", "end_time": "5:15 PM"}, {"start": "2025-09-25T16:00:00", "end": "2025-09-25T17:30:00", "summary": "Freshfields US: Energy Transition and Clean Tech Investment Amid Uncertainty", "location": "New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "4:00 PM", "end_time": "5:30 PM"}, {"start": "2025-09-25T16:00:00", "end": "2025-09-25T17:30:00", "summary": "HSBC: Scaling Up Financing for Climate and Nature-Based Solutions in Emerging Economies — Roundtable", "location": "New York, NY", "description": "AB Representation: Patrick O’Connell", "attendees": ["Patrick O’Connell"], "date_key": "2025-09-25", "date_label": "Thursday, Sep 25", "start_time": "4:00 PM", "end_time": "5:30 PM"}, {"start": "2025-09-26T08:30:00", "end": "2025-09-26T19:00:00", "summary": "Columbia Engineering (in-person): Columbia Center of Advanced Electrification Fall Symposium", "location": "Columbia Engineering, New York, NY", "description": "AB Representation: Rachel Hughes & TBD", "attendees": ["Rachel Hughes"], "date_key": "2025-09-26", "date_label": "Friday, Sep 26", "start_time": "8:30 AM", "end_time": "7:00 PM"}];
+
+function uniq(arr) { return Array.from(new Set(arr)); }
+function byDate(a, b) { return new Date(a.start) - new Date(b.start); }
+
+const allAttendees = uniq(rawEvents.flatMap(e => e.attendees || [])).sort();
+const attSel = document.getElementById('attendee');
+allAttendees.forEach(a => {
+  const opt = document.createElement('option'); opt.value = a; opt.textContent = a; attSel.appendChild(opt);
+});
+const days = uniq(rawEvents.map(e => e.date_key)).sort();
+const daySel = document.getElementById('day');
+days.forEach(d => {
+  const opt = document.createElement('option');
+  const label = new Date(d + 'T00:00:00').toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric' });
+  opt.value = d; opt.textContent = label; daySel.appendChild(opt);
+});
+
+function renderAgenda(list) {
+  const root = document.getElementById('agenda'); root.innerHTML = '';
+  const grouped = list.reduce((acc, ev) => (acc[ev.date_key] = (acc[ev.date_key]||[]).concat(ev), acc), {});
+  Object.keys(grouped).sort().forEach(day => {
+    const dayDiv = document.createElement('div'); dayDiv.className = 'day';
+    const h2 = document.createElement('h2'); h2.textContent = new Date(day + 'T00:00:00')
+      .toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric' });
+    dayDiv.appendChild(h2);
+    grouped[day].sort(byDate).forEach(ev => {
+      const card = document.createElement('div'); card.className = 'event';
+      const time = document.createElement('div'); time.className = 'time'; time.textContent = ev.start_time + ' – ' + ev.end_time;
+      const main = document.createElement('div');
+      const title = document.createElement('div'); title.className = 'summary'; title.textContent = ev.summary;
+      const loc = document.createElement('div'); loc.className = 'loc'; loc.textContent = ev.location || '';
+      main.appendChild(title); main.appendChild(loc);
+      const right = document.createElement('div'); right.className = 'attendees';
+      (ev.attendees || []).forEach(a => { const pill = document.createElement('span'); pill.className='chip'; pill.textContent=a; right.appendChild(pill); });
+      card.appendChild(time); card.appendChild(main); card.appendChild(right); dayDiv.appendChild(card);
+    });
+    root.appendChild(dayDiv);
+  });
+}
+
+function params() {
+  const p = new URLSearchParams(window.location.search);
+  return { attendee: p.get('attendee') || '', day: p.get('day') || '', q: p.get('q') || '' };
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const a = document.getElementById('attendee').value;
+  const d = document.getElementById('day').value;
+  let filtered = rawEvents.slice();
+  if (q) filtered = filtered.filter(ev => (ev.summary||'').toLowerCase().includes(q) || (ev.location||'').toLowerCase().includes(q));
+  if (a) filtered = filtered.filter(ev => (ev.attendees||[]).includes(a));
+  if (d) filtered = filtered.filter(ev => ev.date_key === d);
+  renderAgenda(filtered.sort(byDate));
+  renderChips();
+}
+
+function renderChips() {
+  const chips = document.getElementById('chips'); chips.innerHTML='';
+  const a = document.getElementById('attendee').value;
+  const d = document.getElementById('day').value;
+  const q = document.getElementById('search').value.trim();
+  if (a) { const c = document.createElement('span'); c.className='chip'; c.textContent='Attendee: ' + a;
+           const x = document.createElement('button'); x.textContent='×'; x.onclick = () => { document.getElementById('attendee').value=''; applyFilters(); };
+           c.appendChild(x); chips.appendChild(c); }
+  if (d) { const label = new Date(d + 'T00:00:00').toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+           const c = document.createElement('span'); c.className='chip'; c.textContent='Day: ' + label;
+           const x = document.createElement('button'); x.textContent='×'; x.onclick = () => { document.getElementById('day').value=''; applyFilters(); };
+           c.appendChild(x); chips.appendChild(c); }
+  if (q) { const c = document.createElement('span'); c.className='chip'; c.textContent='Search: ' + q;
+           const x = document.createElement('button'); x.textContent='×'; x.onclick = () => { document.getElementById('search').value=''; applyFilters(); };
+           c.appendChild(x); chips.appendChild(c); }
+}
+
+function toCSV(rows) {
+  const esc = s => ('"'+String(s).replace(/"/g,'""')+'"');
+  const header = ['Date','Start','End','Title','Location','Attendees'];
+  const body = rows.map(ev => [ev.date_key, ev.start_time, ev.end_time, ev.summary||'', ev.location||'', (ev.attendees||[]).join('; ')]);
+  return [header].concat(body).map(r => r.map(esc).join(',')).join('\n');
+}
+function downloadCSV() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const a = document.getElementById('attendee').value;
+  const d = document.getElementById('day').value;
+  let filtered = rawEvents.slice();
+  if (q) filtered = filtered.filter(ev => (ev.summary||'').toLowerCase().includes(q) || (ev.location||'').toLowerCase().includes(q));
+  if (a) filtered = filtered.filter(ev => (ev.attendees||[]).includes(a));
+  if (d) filtered = filtered.filter(ev => ev.date_key === d);
+  const blob = new Blob([toCSV(filtered)], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const aTag = document.createElement('a'); aTag.href = url; aTag.download = 'AB_ClimateWeek_NYC_2025_filtered.csv'; aTag.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+document.getElementById('attendee').addEventListener('change', applyFilters);
+document.getElementById('day').addEventListener('change', applyFilters);
+document.getElementById('clear').addEventListener('click', () => { document.getElementById('search').value=''; document.getElementById('attendee').value=''; document.getElementById('day').value=''; applyFilters(); });
+document.getElementById('export').addEventListener('click', downloadCSV);
+
+// Apply URL params
+const p = params();
+if (p.attendee) document.getElementById('attendee').value = p.attendee;
+if (p.day) document.getElementById('day').value = p.day;
+if (p.q) document.getElementById('search').value = p.q;
+
+// Initial render
+applyFilters();
+</script>
+</body>
+</html>
